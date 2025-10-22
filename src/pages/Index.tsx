@@ -5,17 +5,30 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [message, setMessage] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { id: 1, user: 'Алексей', text: 'Какой матч!', time: '19:42' },
     { id: 2, user: 'Мария', text: 'Невероятный гол! 🔥', time: '19:43' },
     { id: 3, user: 'Дмитрий', text: 'Форвард в огне сегодня', time: '19:44' },
   ]);
 
-  const liveMatches = [
+  const [newMatch, setNewMatch] = useState({
+    league: '',
+    team1: '',
+    team2: '',
+    score1: 0,
+    score2: 0,
+    time: '',
+    viewers: '0'
+  });
+
+  const [liveMatches, setLiveMatches] = useState([
     {
       id: 1,
       league: 'Премьер-Лига',
@@ -49,7 +62,7 @@ const Index = () => {
       live: true,
       viewers: '28.7K'
     },
-  ];
+  ]);
 
   const upcomingMatches = [
     { id: 4, league: 'Серия А', team1: 'Ювентус', team2: 'Милан', date: 'Сегодня', time: '22:00' },
@@ -67,6 +80,32 @@ const Index = () => {
       setChatMessages([...chatMessages, newMsg]);
       setMessage('');
     }
+  };
+
+  const handleAddMatch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const matchToAdd = {
+      id: liveMatches.length + 1,
+      league: newMatch.league,
+      team1: newMatch.team1,
+      team2: newMatch.team2,
+      score1: newMatch.score1,
+      score2: newMatch.score2,
+      time: newMatch.time,
+      live: true,
+      viewers: newMatch.viewers || '0'
+    };
+    setLiveMatches([...liveMatches, matchToAdd]);
+    setNewMatch({
+      league: '',
+      team1: '',
+      team2: '',
+      score1: 0,
+      score2: 0,
+      time: '',
+      viewers: '0'
+    });
+    setIsDialogOpen(false);
   };
 
   return (
@@ -142,9 +181,114 @@ const Index = () => {
                   <span className="w-2 h-2 bg-primary rounded-full animate-pulse-glow"></span>
                   LIVE МАТЧИ
                 </h3>
-                <Badge variant="outline" className="font-heading">
-                  {liveMatches.length} В ЭФИРЕ
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="font-heading">
+                    {liveMatches.length} В ЭФИРЕ
+                  </Badge>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-primary hover:bg-primary/90 font-heading">
+                        <Icon name="Plus" size={18} className="mr-2" />
+                        ДОБАВИТЬ МАТЧ
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-border max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="font-heading text-2xl">НОВАЯ ТРАНСЛЯЦИЯ</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleAddMatch} className="space-y-4 mt-4">
+                        <div>
+                          <Label htmlFor="league" className="font-heading text-sm">Лига</Label>
+                          <Input
+                            id="league"
+                            placeholder="Премьер-Лига"
+                            value={newMatch.league}
+                            onChange={(e) => setNewMatch({...newMatch, league: e.target.value})}
+                            className="bg-input border-border mt-1"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="team1" className="font-heading text-sm">Команда 1</Label>
+                            <Input
+                              id="team1"
+                              placeholder="Спартак"
+                              value={newMatch.team1}
+                              onChange={(e) => setNewMatch({...newMatch, team1: e.target.value})}
+                              className="bg-input border-border mt-1"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="team2" className="font-heading text-sm">Команда 2</Label>
+                            <Input
+                              id="team2"
+                              placeholder="Зенит"
+                              value={newMatch.team2}
+                              onChange={(e) => setNewMatch({...newMatch, team2: e.target.value})}
+                              className="bg-input border-border mt-1"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="score1" className="font-heading text-sm">Счёт 1</Label>
+                            <Input
+                              id="score1"
+                              type="number"
+                              min="0"
+                              value={newMatch.score1}
+                              onChange={(e) => setNewMatch({...newMatch, score1: parseInt(e.target.value) || 0})}
+                              className="bg-input border-border mt-1"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="score2" className="font-heading text-sm">Счёт 2</Label>
+                            <Input
+                              id="score2"
+                              type="number"
+                              min="0"
+                              value={newMatch.score2}
+                              onChange={(e) => setNewMatch({...newMatch, score2: parseInt(e.target.value) || 0})}
+                              className="bg-input border-border mt-1"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="time" className="font-heading text-sm">Время</Label>
+                            <Input
+                              id="time"
+                              placeholder="45'"
+                              value={newMatch.time}
+                              onChange={(e) => setNewMatch({...newMatch, time: e.target.value})}
+                              className="bg-input border-border mt-1"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="viewers" className="font-heading text-sm">Зрители</Label>
+                            <Input
+                              id="viewers"
+                              placeholder="1.2K"
+                              value={newMatch.viewers}
+                              onChange={(e) => setNewMatch({...newMatch, viewers: e.target.value})}
+                              className="bg-input border-border mt-1"
+                            />
+                          </div>
+                        </div>
+                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 font-heading text-lg">
+                          <Icon name="Plus" size={18} className="mr-2" />
+                          ДОБАВИТЬ ТРАНСЛЯЦИЮ
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <div className="space-y-4 animate-slide-up">
