@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -42,7 +42,8 @@ const Index = () => {
       score2: 1,
       time: '67\'',
       live: true,
-      viewers: '12.5K'
+      viewers: 12500,
+      likes: 342
     },
     {
       id: 2,
@@ -53,7 +54,8 @@ const Index = () => {
       score2: 3,
       time: '82\'',
       live: true,
-      viewers: '45.2K'
+      viewers: 45200,
+      likes: 1823
     },
     {
       id: 3,
@@ -64,9 +66,44 @@ const Index = () => {
       score2: 0,
       time: '45\'',
       live: true,
-      viewers: '28.7K'
+      viewers: 28700,
+      likes: 892
     },
   ]);
+
+  const [likedMatches, setLikedMatches] = useState<number[]>([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveMatches(prev => prev.map(match => ({
+        ...match,
+        viewers: match.viewers + Math.floor(Math.random() * 100) - 30,
+      })));
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
+  const handleLike = (matchId: number) => {
+    if (likedMatches.includes(matchId)) {
+      setLikedMatches(likedMatches.filter(id => id !== matchId));
+      setLiveMatches(prev => prev.map(match => 
+        match.id === matchId ? { ...match, likes: match.likes - 1 } : match
+      ));
+    } else {
+      setLikedMatches([...likedMatches, matchId]);
+      setLiveMatches(prev => prev.map(match => 
+        match.id === matchId ? { ...match, likes: match.likes + 1 } : match
+      ));
+    }
+  };
 
   const upcomingMatches = [
     { id: 4, league: 'Серия А', team1: 'Ювентус', team2: 'Милан', date: 'Сегодня', time: '22:00' },
@@ -97,7 +134,8 @@ const Index = () => {
       score2: newMatch.score2,
       time: newMatch.time,
       live: true,
-      viewers: newMatch.viewers || '0',
+      viewers: parseInt(newMatch.viewers) || 0,
+      likes: 0,
       streamUrl: newMatch.streamUrl || ''
     };
     setLiveMatches([...liveMatches, matchToAdd]);
@@ -280,14 +318,50 @@ const Index = () => {
                   </div>
                 </div>
               )}
-              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                <div>
-                  <Badge variant="secondary" className="mb-2">{selectedMatch.league}</Badge>
-                  <div className="font-heading text-2xl">{selectedMatch.score1} : {selectedMatch.score2}</div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                  <div>
+                    <Badge variant="secondary" className="mb-2">{selectedMatch.league}</Badge>
+                    <div className="font-heading text-2xl">{selectedMatch.score1} : {selectedMatch.score2}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">Время матча</div>
+                    <div className="font-heading text-xl text-primary">{selectedMatch.time}</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm text-muted-foreground">Время матча</div>
-                  <div className="font-heading text-xl text-primary">{selectedMatch.time}</div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Icon name="Eye" size={20} className="text-primary" />
+                      <span className="text-sm text-muted-foreground">Зрители онлайн</span>
+                    </div>
+                    <div className="font-heading text-3xl text-primary animate-pulse-glow">
+                      {formatNumber(selectedMatch.viewers)}
+                    </div>
+                  </div>
+
+                  <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Icon name="Heart" size={20} className="text-accent" />
+                      <span className="text-sm text-muted-foreground">Лайки</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="font-heading text-3xl text-accent">{selectedMatch.likes}</div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-accent text-accent hover:bg-accent/20"
+                        onClick={() => handleLike(selectedMatch.id)}
+                      >
+                        <Icon 
+                          name="Heart" 
+                          size={16} 
+                          className={likedMatches.includes(selectedMatch.id) ? "fill-accent" : ""}
+                        />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -469,9 +543,25 @@ const Index = () => {
                       <Badge variant="secondary" className="text-xs font-heading">
                         {match.league}
                       </Badge>
-                      <div className="flex items-center gap-2">
-                        <Icon name="Eye" size={16} className="text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{match.viewers}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md">
+                          <Icon name="Eye" size={14} className="text-primary" />
+                          <span className="text-xs font-medium text-primary animate-pulse-glow">{formatNumber(match.viewers)}</span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(match.id);
+                          }}
+                          className="flex items-center gap-1 bg-accent/10 px-2 py-1 rounded-md hover:bg-accent/20 transition-colors"
+                        >
+                          <Icon 
+                            name={likedMatches.includes(match.id) ? "Heart" : "Heart"} 
+                            size={14} 
+                            className={likedMatches.includes(match.id) ? "text-accent fill-accent" : "text-accent"}
+                          />
+                          <span className="text-xs font-medium text-accent">{match.likes}</span>
+                        </button>
                       </div>
                     </div>
 
