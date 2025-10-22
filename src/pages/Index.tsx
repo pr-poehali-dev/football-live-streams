@@ -25,8 +25,12 @@ const Index = () => {
     score1: 0,
     score2: 0,
     time: '',
-    viewers: '0'
+    viewers: '0',
+    streamUrl: ''
   });
+
+  const [isOBSDialogOpen, setIsOBSDialogOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
 
   const [liveMatches, setLiveMatches] = useState([
     {
@@ -93,7 +97,8 @@ const Index = () => {
       score2: newMatch.score2,
       time: newMatch.time,
       live: true,
-      viewers: newMatch.viewers || '0'
+      viewers: newMatch.viewers || '0',
+      streamUrl: newMatch.streamUrl || ''
     };
     setLiveMatches([...liveMatches, matchToAdd]);
     setNewMatch({
@@ -103,9 +108,14 @@ const Index = () => {
       score1: 0,
       score2: 0,
       time: '',
-      viewers: '0'
+      viewers: '0',
+      streamUrl: ''
     });
     setIsDialogOpen(false);
+  };
+
+  const handleWatchMatch = (match: any) => {
+    setSelectedMatch(match);
   };
 
   return (
@@ -151,6 +161,139 @@ const Index = () => {
           </div>
         </div>
       </nav>
+
+      <Dialog open={isOBSDialogOpen} onOpenChange={setIsOBSDialogOpen}>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-3xl">КАК СТРИМИТЬ ЧЕРЕЗ OBS</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+              <h4 className="font-heading text-lg mb-2 flex items-center gap-2">
+                <Icon name="Info" size={20} className="text-primary" />
+                ДЛЯ СТРИМИНГА НУЖЕН ВНЕШНИЙ СЕРВИС
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Используй YouTube Live, Twitch или другие платформы для трансляции
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-heading text-xl mb-3">ВАРИАНТ 1: YOUTUBE LIVE</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Открой <a href="https://studio.youtube.com" target="_blank" className="text-primary underline">YouTube Studio</a></li>
+                  <li>Нажми "Создать" → "Начать трансляцию"</li>
+                  <li>Скопируй "Ключ трансляции" и "URL сервера"</li>
+                  <li>В OBS: Настройки → Трансляция → Сервис: YouTube</li>
+                  <li>Вставь ключ трансляции</li>
+                  <li>Начни трансляцию в OBS</li>
+                  <li>Скопируй ссылку на трансляцию YouTube и добавь в форму выше</li>
+                </ol>
+              </div>
+
+              <div>
+                <h4 className="font-heading text-xl mb-3">ВАРИАНТ 2: TWITCH</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Открой <a href="https://dashboard.twitch.tv" target="_blank" className="text-primary underline">Twitch Dashboard</a></li>
+                  <li>Настройки → Канал → Ключ трансляции</li>
+                  <li>Скопируй ключ</li>
+                  <li>В OBS: Настройки → Трансляция → Сервис: Twitch</li>
+                  <li>Вставь ключ трансляции</li>
+                  <li>Начни трансляцию в OBS</li>
+                  <li>Скопируй ссылку на твой канал Twitch и добавь в форму выше</li>
+                </ol>
+              </div>
+
+              <div>
+                <h4 className="font-heading text-xl mb-3">ВАРИАНТ 3: VK ВИДЕО</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Открой <a href="https://vk.com/video" target="_blank" className="text-primary underline">VK Видео</a></li>
+                  <li>Создай прямую трансляцию</li>
+                  <li>Получи RTMP URL и ключ</li>
+                  <li>В OBS: Настройки → Трансляция → Сервис: Пользовательский</li>
+                  <li>Вставь URL сервера и ключ</li>
+                  <li>Начни трансляцию</li>
+                  <li>Скопируй ссылку на трансляцию и добавь в форму выше</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <h4 className="font-heading text-lg mb-2">НАСТРОЙКИ OBS ДЛЯ ФУТБОЛА</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Разрешение: 1920x1080 (Full HD)</li>
+                <li>• FPS: 60 кадров/сек для плавности</li>
+                <li>• Битрейт: 4500-6000 kbps</li>
+                <li>• Кодировщик: x264 или NVENC (для Nvidia)</li>
+              </ul>
+            </div>
+
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90 font-heading text-lg"
+              onClick={() => {
+                setIsOBSDialogOpen(false);
+                setIsDialogOpen(true);
+              }}
+            >
+              ПОНЯТНО, ДОБАВИТЬ ТРАНСЛЯЦИЮ
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {selectedMatch && (
+        <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
+          <DialogContent className="bg-card border-border max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-2xl">
+                {selectedMatch.team1} vs {selectedMatch.team2}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedMatch.streamUrl ? (
+                <div className="aspect-video bg-secondary rounded-lg overflow-hidden">
+                  {selectedMatch.streamUrl.includes('youtube.com') || selectedMatch.streamUrl.includes('youtu.be') ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/${selectedMatch.streamUrl.includes('watch?v=') ? selectedMatch.streamUrl.split('watch?v=')[1]?.split('&')[0] : selectedMatch.streamUrl.split('youtu.be/')[1]}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : selectedMatch.streamUrl.includes('twitch.tv') ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://player.twitch.tv/?channel=${selectedMatch.streamUrl.split('twitch.tv/')[1]}&parent=${window.location.hostname}`}
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-muted-foreground">Формат трансляции не поддерживается. Используйте YouTube или Twitch.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Icon name="VideoOff" size={48} className="mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Трансляция недоступна</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
+                <div>
+                  <Badge variant="secondary" className="mb-2">{selectedMatch.league}</Badge>
+                  <div className="font-heading text-2xl">{selectedMatch.score1} : {selectedMatch.score2}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">Время матча</div>
+                  <div className="font-heading text-xl text-primary">{selectedMatch.time}</div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {activeTab === 'home' && (
         <main className="container mx-auto px-4 py-8">
@@ -281,6 +424,30 @@ const Index = () => {
                             />
                           </div>
                         </div>
+                        <div>
+                          <Label htmlFor="streamUrl" className="font-heading text-sm">Ссылка на трансляцию (YouTube/Twitch)</Label>
+                          <Input
+                            id="streamUrl"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={newMatch.streamUrl}
+                            onChange={(e) => setNewMatch({...newMatch, streamUrl: e.target.value})}
+                            className="bg-input border-border mt-1"
+                          />
+                        </div>
+                        <div className="pt-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full mb-2 border-accent text-accent hover:bg-accent/10"
+                            onClick={() => {
+                              setIsDialogOpen(false);
+                              setIsOBSDialogOpen(true);
+                            }}
+                          >
+                            <Icon name="Video" size={18} className="mr-2" />
+                            Как стримить через OBS?
+                          </Button>
+                        </div>
                         <Button type="submit" className="w-full bg-primary hover:bg-primary/90 font-heading text-lg">
                           <Icon name="Plus" size={18} className="mr-2" />
                           ДОБАВИТЬ ТРАНСЛЯЦИЮ
@@ -326,7 +493,11 @@ const Index = () => {
                         <Icon name="Clock" size={14} className="mr-1" />
                         {match.time}
                       </Badge>
-                      <Button size="sm" className="font-heading">
+                      <Button 
+                        size="sm" 
+                        className="font-heading"
+                        onClick={() => handleWatchMatch(match)}
+                      >
                         СМОТРЕТЬ
                         <Icon name="ChevronRight" size={16} className="ml-1" />
                       </Button>
